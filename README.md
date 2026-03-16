@@ -13,8 +13,16 @@ An interesting jigsaw puzzle game.
 ## 功能特性
 
 ### 游戏模式
+**游戏主页**
+<img width="1856" height="948" alt="homepage" src="https://github.com/user-attachments/assets/ce8dde14-c88e-4d92-8dad-e146abf1a716" />
+- 两种游戏模式选择入口
+- 动态背景视觉效果
+- 背景音乐播放控制
+- 响应式设计，适配多种设备
 
 **经典模式**
+<img width="1857" height="957" alt="classic-mode" src="https://github.com/user-attachments/assets/1b69bc76-8ea8-4a8e-b2f4-5e87ba0f4410" />
+
 - 支持自定义图片上传或使用默认拼图
 - 可调节难度级别（2×2 至 10×10 网格）
 - 拖拽交互，支持拼图块旋转
@@ -22,6 +30,8 @@ An interesting jigsaw puzzle game.
 - AI 智能提示系统（基于 DeepSeek API）
 
 **记忆模式**
+<img width="1863" height="951" alt="memory-mode" src="https://github.com/user-attachments/assets/715efffe-cd48-4aaf-b44e-5f1f32e8ec5a" />
+
 - 图像预览与记忆挑战机制
 - 多关卡递进式难度设计
 - 实时计分与进度追踪
