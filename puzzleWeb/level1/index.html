@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>拼图游戏</title>
+    <link rel="stylesheet" href="style.css?v=1.0.1_20260316">
+</head>
+<body>
+    <div class="game-logo">🧩 拼图游戏</div>
+    
+    <!-- 漂浮拼图碎片 -->
+    <div class="floating-puzzle" style="top: 10%; left: 5%; animation-delay: 0s;">🧩</div>
+    <div class="floating-puzzle" style="top: 20%; left: 90%; animation-delay: 5s;">🧩</div>
+    <div class="floating-puzzle" style="top: 60%; left: 8%; animation-delay: 10s;">🧩</div>
+    <div class="floating-puzzle" style="top: 80%; left: 85%; animation-delay: 15s;">🧩</div>
+    <div class="floating-puzzle" style="top: 40%; left: 95%; animation-delay: 8s;">🧩</div>
+    
+    <!-- 粒子效果 -->
+    <div class="particle" style="top: 15%; left: 15%; animation-delay: 0s;"></div>
+    <div class="particle" style="top: 35%; left: 80%; animation-delay: 3s;"></div>
+    <div class="particle" style="top: 55%; left: 25%; animation-delay: 6s;"></div>
+    <div class="particle" style="top: 75%; left: 70%; animation-delay: 9s;"></div>
+    <div class="particle" style="top: 25%; left: 60%; animation-delay: 12s;"></div>
+    
+    <!-- 几何图形 -->
+    <div class="geometric" style="top: 30%; left: 3%; width: 50px; height: 50px; border: 2px solid rgba(102, 126, 234, 0.1); animation-delay: 0s;"></div>
+    <div class="geometric" style="top: 70%; left: 92%; width: 40px; height: 40px; border: 2px solid rgba(255, 107, 107, 0.1); animation-delay: 7s;"></div>
+    <div class="geometric" style="top: 50%; left: 5%; width: 30px; height: 30px; border: 2px solid rgba(86, 171, 47, 0.1); animation-delay: 14s;"></div>
+    
+    <!-- 音乐控制 -->
+    <div class="music-controls">
+        <div class="music-buttons">
+            <div class="music-btn music-btn-small" id="prevMusic" onclick="changeMusic(-1)" title="上一首">◀</div>
+            <div class="music-btn" id="toggleMusic" onclick="toggleMusic()" title="播放/暂停">🎵</div>
+            <div class="music-btn music-btn-small" id="nextMusic" onclick="changeMusic(1)" title="下一首">▶</div>
+        </div>
+        <div class="music-name" id="musicName">播放音乐</div>
+    </div>
+    
+    <div class="top-section">
+        <header>
+            <h1>拼图小工匠</h1>
+        </header>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>选择图片</label>
+                <input type="file" id="imageInput" accept="image/*">
+            </div>
+            <div class="control-group">
+                <label>行列数 (2-10)</label>
+                <input type="number" id="gridSize" value="3" min="2" max="10">
+            </div>
+            <button class="btn btn-primary" id="startBtn">开始游戏</button>
+            <button class="btn btn-secondary" id="resetBtn">重置</button>
+            <button class="btn btn-success" id="checkBtn">检查完成</button>
+            <button class="btn btn-back" id="backBtn">返回关卡</button>
+        </div>
+    </div>
+
+    <div class="game-info" id="gameInfo" style="display: flex;">
+        <div class="info-item">
+            <span class="label">移动次数</span>
+            <span class="value" id="moveCount">0</span>
+        </div>
+        <div class="info-item">
+            <span class="label">已放置</span>
+            <span class="value" id="placedCount">0</span>
+        </div>
+        <div class="info-item">
+            <span class="label">难度</span>
+            <span class="value" id="difficulty">3×3</span>
+        </div>
+        <div class="info-item">
+            <span class="label">耗时</span>
+            <span class="value" id="timeElapsed">00:00</span>
+        </div>
+        <div class="info-item rotation-control">
+            <button class="btn" id="toggleRotationBtn">显示旋转角度</button>
+        </div>
+    </div>
+
+    <div class="game-container" id="gameContainer" style="display: flex;">
+        <div class="main-game-wrapper">
+            <div class="puzzle-area">
+                <div class="puzzle-grid" id="puzzleGrid"></div>
+            </div>
+            <div class="preview-area">
+                <h3>原图预览</h3>
+                <img class="preview-image" id="previewImage" src="" alt="预览">
+                <div class="hint">
+                    💡 提示：拖拽拼图块到正确位置，双击拼图块可旋转
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="complete-overlay" id="completeOverlay">
+        <div class="complete-modal">
+            <h2>🎉 恭喜拼图完成!</h2>
+            <p>你移动了 <span id="finalMoves">0</span> 步</p>
+            <p>耗时: <span id="finalTime">00:00</span></p>
+            <button class="btn btn-success" id="playAgainBtn">再玩一次</button>
+        </div>
+    </div>
+
+    <div class="footer-text">
+        憨豆先生说：乐哈哈的心态能解决生活中的大困难。小游戏当然能带来小小的开心！游戏愉快~~嘻嘻🌞
+    </div>
+
+    <script>
+        // 音乐控制
+        const bgmFiles = [
+            '../assets/sounds/bgm/曼波波波波.mp3',
+            '../assets/sounds/bgm/晴天.mp3'
+        ];
+        
+        function extractFileName(filePath) {
+            const parts = filePath.split('/');
+            const fileName = parts[parts.length - 1];
+            return fileName.replace('.mp3', '');
+        }
+        
+        const musicNames = bgmFiles.map(extractFileName);
+        let currentMusicIndex = 0;
+        let bgm = null;
+        let isPlaying = false;
+        let userInteracted = false;
+        
+        function initAudio() {
+            if (!bgm) {
+                bgm = new Audio();
+                bgm.src = bgmFiles[currentMusicIndex];
+                bgm.loop = true;
+                bgm.volume = 0.3;
+                
+                bgm.addEventListener('canplay', () => {
+                    console.log('音频可以播放:', bgmFiles[currentMusicIndex]);
+                });
+                
+                bgm.addEventListener('error', (e) => {
+                    console.error('音频加载失败:', e);
+                    console.error('文件路径:', bgmFiles[currentMusicIndex]);
+                });
+            }
+        }
+        
+        document.addEventListener('click', () => {
+            if (!userInteracted) {
+                userInteracted = true;
+                console.log('用户已交互，可以播放音频');
+            }
+        }, { once: true });
+        
+        document.addEventListener('keydown', () => {
+            if (!userInteracted) {
+                userInteracted = true;
+                console.log('用户已交互，可以播放音频');
+            }
+        }, { once: true });
+        
+        // 页面加载后尝试自动播放
+        window.addEventListener('load', () => {
+            initAudio();
+            setTimeout(() => {
+                const playPromise = bgm.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        isPlaying = true;
+                        const btn = document.getElementById('toggleMusic');
+                        btn.textContent = '🎶';
+                        btn.classList.add('active');
+                        console.log('自动播放成功');
+                        updateMusicName();
+                    }).catch(e => {
+                        console.log('自动播放失败，等待用户交互:', e);
+                    });
+                }
+            }, 500);
+        });
+        
+        function toggleMusic() {
+            initAudio();
+            const btn = document.getElementById('toggleMusic');
+            const nameEl = document.getElementById('musicName');
+            if (isPlaying) {
+                bgm.pause();
+                btn.textContent = '🎵';
+                btn.classList.remove('active');
+                console.log('音乐暂停');
+            } else {
+                const playPromise = bgm.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        btn.textContent = '🎶';
+                        btn.classList.add('active');
+                        console.log('音乐播放');
+                    }).catch(e => {
+                        console.error('播放失败:', e);
+                    });
+                }
+            }
+            isPlaying = !isPlaying;
+            updateMusicName();
+        }
+        
+        function updateMusicName() {
+            const nameEl = document.getElementById('musicName');
+            if (nameEl) {
+                nameEl.textContent = musicNames[currentMusicIndex];
+            }
+        }
+        
+        function changeMusic(direction) {
+            initAudio();
+            currentMusicIndex = (currentMusicIndex + direction + bgmFiles.length) % bgmFiles.length;
+            const wasPlaying = isPlaying;
+            
+            if (isPlaying) {
+                bgm.pause();
+                isPlaying = false;
+            }
+            
+            bgm.src = bgmFiles[currentMusicIndex];
+            console.log('切换到音乐:', bgmFiles[currentMusicIndex]);
+            updateMusicName();
+            
+            bgm.load();
+            bgm.addEventListener('canplay', () => {
+                console.log('新音乐可以播放');
+                bgm.play().then(() => {
+                    isPlaying = true;
+                    const btn = document.getElementById('toggleMusic');
+                    btn.textContent = '🎶';
+                    btn.classList.add('active');
+                    console.log('音乐继续播放');
+                }).catch(e => console.error('播放失败:', e));
+            }, { once: true });
+            
+            bgm.addEventListener('error', (e) => {
+                console.error('音乐加载失败:', e);
+                console.error('文件路径:', bgmFiles[currentMusicIndex]);
+            }, { once: true });
+        }
+    </script>
+
+    <script src="game.js?v=1.0.1_20260316"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: puzzle-service
+
+deepseek:
+  api:
+    key: ${DEEPSEEK_API_KEY}
+    url: "https://api.deepseek.com"
+
+logging:
+  level:
+    com.puzzle.service: DEBUG
+    org.springframework.web: INFO

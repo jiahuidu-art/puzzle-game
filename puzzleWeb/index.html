@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>拼图游戏 - 关卡选择</title>
+    <link rel="stylesheet" href="style.css?v=1.0.1_20260316">
+    <style>
+        body {
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #e3f2fd 0%, #d4edda 50%, #ffe4cc 100%);
+            min-height: 100vh;
+        }
+        
+        /* 帮助按钮 */
+        .help-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            z-index: 1000;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #667eea;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 音乐控制容器 */
+        .music-controls {
+            position: fixed;
+            top: 20px;
+            right: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            z-index: 1000;
+            background: transparent;
+            border-radius: 15px;
+            padding: 8px 10px;
+            border: none;
+        }
+        
+        .music-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .music-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px solid #667eea;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .music-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .music-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .music-btn-small {
+            width: 28px;
+            height: 28px;
+            font-size: 1.2rem;
+            color: #adb5bd;
+        }
+        
+        .music-name {
+            font-size: 0.75rem;
+            color: #667eea;
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+        
+        .help-btn:hover {
+            transform: scale(1.05);
+            background: #667eea;
+            color: white;
+            box-shadow: 0 3px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        /* 帮助面板 */
+        .help-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            transition: right 0.4s ease-in-out;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .help-panel.show {
+            right: 0;
+        }
+        
+        .help-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .help-panel::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        .help-panel::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 4px;
+        }
+        
+        .help-content {
+            padding: 30px;
+        }
+        
+        .help-section {
+            margin-bottom: 30px;
+        }
+        
+        .help-section h2 {
+            color: #4a5568;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .help-section p {
+            color: #718096;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+        
+        .help-section ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .help-section li {
+            color: #718096;
+            line-height: 1.6;
+            margin-bottom: 8px;
+            padding-left: 25px;
+            position: relative;
+            font-size: 0.9em;
+        }
+        
+        .help-section li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .shortcut-key {
+            display: inline-block;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #667eea;
+            margin: 0 3px;
+        }
+        
+        /* 漂浮拼图碎片 */
+        .floating-puzzle {
+            position: fixed;
+            font-size: 4rem;
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 0;
+            animation: float 20s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-30px) rotate(90deg);
+            }
+            50% {
+                transform: translateY(0) rotate(180deg);
+            }
+            75% {
+                transform: translateY(30px) rotate(270deg);
+            }
+        }
+        
+        /* 粒子效果 */
+        .particle {
+            position: fixed;
+            width: 25px;
+            height: 25px;
+            background: rgba(102, 126, 234, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: particleFloat 15s infinite ease-in-out;
+        }
+        
+        @keyframes particleFloat {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+                opacity: 0.1;
+            }
+            50% {
+                transform: translateY(-100px) scale(1.5);
+                opacity: 0.2;
+            }
+        }
+        
+        /* 几何图形 */
+        .geometric {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.4;
+            animation: geometricRotate 25s infinite linear;
+        }
+        
+        @keyframes geometricRotate {
+            0% {
+                transform: rotate(0deg) scale(1);
+            }
+            50% {
+                transform: rotate(180deg) scale(1.2);
+            }
+            100% {
+                transform: rotate(360deg) scale(1);
+            }
+        }
+        
+        /* Emoji动画 */
+        .emoji-animation {
+            display: inline-block;
+            animation: emojiBounce 2s infinite ease-in-out;
+        }
+        
+        @keyframes emojiBounce {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-10px) rotate(-15deg);
+            }
+            50% {
+                transform: translateY(0) rotate(0deg);
+            }
+            75% {
+                transform: translateY(-5px) rotate(15deg);
+            }
+        }
+        
+        /* 打字机效果 */
+        .typewriter {
+            overflow: hidden;
+            border-right: 3px solid #667eea;
+            white-space: nowrap;
+            animation: typing 3s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+        
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #667eea; }
+        }
+        
+        .level-selection {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .level-selection h1 {
+            text-align: center;
+            color: #4a5568;
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .level-selection h1 .emoji {
+            display: inline-block;
+        }
+        
+        .level-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 15px;
+        }
+        
+        .level-card {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 3px solid transparent;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideIn 0.6s ease-out;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .level-card:hover {
+            transform: translateY(-10px) rotateY(10deg);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            border-color: #667eea;
+        }
+        
+        .level-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        .level-title {
+            font-size: 1.8em;
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .level-description {
+            color: #718096;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .level-features {
+            text-align: left;
+            margin-bottom: 25px;
+        }
+        
+        .level-feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #4a5568;
+        }
+        
+        .level-feature::before {
+            content: "✓";
+            color: #48bb78;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        .level-difficulty {
+            display: inline-block;
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .level-card.level1 {
+            background: linear-gradient(135deg, #a8e6cf 0%, #56ab2f 100%);
+            color: white;
+        }
+        
+        .level-card.level1 .level-title,
+        .level-card.level1 .level-description,
+        .level-card.level1 .level-feature {
+            color: white;
+        }
+        
+        .level-card.level2 {
+            background: linear-gradient(135deg, #ffa726 0%, #ff6b6b 100%);
+            color: white;
+        }
+        
+        .level-card.level2 .level-title,
+        .level-card.level2 .level-description,
+        .level-card.level2 .level-feature {
+            color: white;
+        }
+        
+        .level-card.level2 .level-difficulty {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .play-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: #4a5568;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .play-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .level-card.level1 .play-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: #56ab2f;
+        }
+        
+        .level-card.level2 .play-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: #ff6b6b;
+        }
+        
+        @media (max-width: 768px) {
+            .level-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .level-selection h1 {
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 漂浮拼图碎片 -->
+    <div class="floating-puzzle" style="top: 10%; left: 5%; animation-delay: 0s;">🧩</div>
+    <div class="floating-puzzle" style="top: 20%; left: 90%; animation-delay: 5s;">🧩</div>
+    <div class="floating-puzzle" style="top: 60%; left: 8%; animation-delay: 10s;">🧩</div>
+    <div class="floating-puzzle" style="top: 80%; left: 85%; animation-delay: 15s;">🧩</div>
+    <div class="floating-puzzle" style="top: 40%; left: 95%; animation-delay: 8s;">🧩</div>
+    <div class="floating-puzzle" style="top: 15%; left: 45%; animation-delay: 3s;">🧩</div>
+    <div class="floating-puzzle" style="top: 70%; left: 30%; animation-delay: 12s;">🧩</div>
+    <div class="floating-puzzle" style="top: 45%; left: 75%; animation-delay: 18s;">🧩</div>
+    <div class="floating-puzzle" style="top: 85%; left: 55%; animation-delay: 6s;">🧩</div>
+    <div class="floating-puzzle" style="top: 30%; left: 65%; animation-delay: 9s;">🧩</div>
+    
+    <!-- 粒子效果 -->
+    <div class="particle" style="top: 15%; left: 15%; animation-delay: 0s;"></div>
+    <div class="particle" style="top: 35%; left: 80%; animation-delay: 3s;"></div>
+    <div class="particle" style="top: 55%; left: 25%; animation-delay: 6s;"></div>
+    <div class="particle" style="top: 75%; left: 70%; animation-delay: 9s;"></div>
+    <div class="particle" style="top: 25%; left: 60%; animation-delay: 12s;"></div>
+    <div class="particle" style="top: 45%; left: 40%; animation-delay: 15s;"></div>
+    <div class="particle" style="top: 65%; left: 85%; animation-delay: 18s;"></div>
+    <div class="particle" style="top: 85%; left: 20%; animation-delay: 21s;"></div>
+    <div class="particle" style="top: 5%; left: 50%; animation-delay: 24s;"></div>
+    <div class="particle" style="top: 90%; left: 95%; animation-delay: 27s;"></div>
+    
+    <!-- 几何图形 -->
+    <div class="geometric" style="top: 30%; left: 3%; width: 50px; height: 50px; border: 2px solid rgba(102, 126, 234, 0.1); animation-delay: 0s;"></div>
+    <div class="geometric" style="top: 70%; left: 92%; width: 40px; height: 40px; border: 2px solid rgba(255, 107, 107, 0.1); animation-delay: 7s;"></div>
+    <div class="geometric" style="top: 50%; left: 5%; width: 30px; height: 30px; border: 2px solid rgba(86, 171, 47, 0.1); animation-delay: 14s;"></div>
+    <div class="geometric" style="top: 20%; left: 75%; width: 45px; height: 45px; border: 2px solid rgba(255, 193, 7, 0.1); animation-delay: 21s;"></div>
+    <div class="geometric" style="top: 85%; left: 60%; width: 35px; height: 35px; border: 2px solid rgba(156, 39, 176, 0.1); animation-delay: 28s;"></div>
+    <div class="geometric" style="top: 40%; left: 88%; width: 55px; height: 55px; border: 2px solid rgba(233, 30, 99, 0.1); animation-delay: 35s;"></div>
+    
+    <!-- 音乐控制 -->
+    <div class="music-controls">
+        <div class="music-buttons">
+            <div class="music-btn music-btn-small" id="prevMusic" onclick="changeMusic(-1)" title="上一首">◀</div>
+            <div class="music-btn" id="toggleMusic" onclick="toggleMusic()" title="播放/暂停">🎵</div>
+            <div class="music-btn music-btn-small" id="nextMusic" onclick="changeMusic(1)" title="下一首">▶</div>
+        </div>
+        <div class="music-name" id="musicName">播放音乐</div>
+    </div>
+    
+    <!-- 帮助按钮 -->
+    <div class="help-btn" onclick="toggleHelp()">帮助</div>
+    
+    <!-- 帮助面板 -->
+    <div class="help-panel" id="helpPanel">
+        <div class="help-content">
+            <div class="help-section">
+                <h2>🎮 游戏说明</h2>
+                <p>欢迎来到拼图游戏！这里有两个模式供你选择，每个模式都有独特的玩法和挑战。</p>
+            </div>
+            
+            <div class="help-section">
+                <h2>🧩 经典智能拼图模式</h2>
+                <p>适合新手入门，AI助手会提供拼图思路，帮助你轻松完成拼图挑战。</p>
+                <ul>
+                    <li>AI智能助手提示拼图位置</li>
+                    <li>自由拖动拼图块到任意位置</li>
+                    <li>支持自己导入图片进行拼图</li>
+                    <li>难度较低，适合练习</li>
+                </ul>
+            </div>
+            
+            <div class="help-section">
+                <h2>🧠 记忆大师拼图模式</h2>
+                <p>挑战你的记忆力！5秒预览后凭记忆拼图，只有3次查看原图的机会。</p>
+                <ul>
+                    <li>5秒预览原图后自动隐藏</li>
+                    <li>仅3次查看原图机会，请珍惜</li>
+                    <li>正确位置会自动锁定</li>
+                    <li>基于表现的综合评分系统</li>
+                </ul>
+            </div>
+            
+            <div class="help-section">
+                <h2>🎯 操作方式</h2>
+                <ul>
+                    <li>鼠标拖动拼图块到目标位置</li>
+                    <li>触摸屏也可以拖动操作</li>
+                    <li>点击"检查完成"查看当前进度</li>
+                    <li>点击"重置"重新开始游戏</li>
+                </ul>
+            </div>
+            
+            <div class="help-section">
+                <h2>💡 小贴士</h2>
+                <ul>
+                    <li>建议从经典模式开始，熟悉操作</li>
+                    <li>记忆模式可以锻炼短期记忆力</li>
+                    <li>多练习可以提高拼图速度</li>
+                    <li>选择合适的难度，享受游戏乐趣</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="level-selection">
+        <h1><span class="emoji">🧩</span> 拼图游戏</h1>
+        
+        <div class="level-cards">
+            <!-- 第一关 -->
+            <div class="level-card level1" onclick="goToLevel(1)">
+                <div class="level-icon emoji-animation">🧩</div>
+                <div class="level-title">经典智能拼图模式</div>
+                <div class="level-difficulty">难度：简单</div>
+                <div class="level-description">
+                    智能拼图游戏，AI助手提供拼图思路，轻松完成拼图挑战
+                </div>
+                <div class="level-features">
+                    <div class="level-feature">AI智能助手提示</div>
+                    <div class="level-feature">自由拖动拼图块</div>
+                    <div class="level-feature">支持自己导入图片</div>
+                    <div class="level-feature">适合新手入门</div>
+                </div>
+                <a href="level1/index.html" class="play-btn">开始游戏</a>
+            </div>
+            
+            <!-- 第二关 -->
+            <div class="level-card level2" onclick="goToLevel(2)">
+                <div class="level-icon emoji-animation">🧠</div>
+                <div class="level-title">记忆大师拼图模式</div>
+                <div class="level-difficulty">难度：困难</div>
+                <div class="level-description">
+                    挑战你的记忆力！5秒预览后凭记忆拼图，有限提示次数
+                </div>
+                <div class="level-features">
+                    <div class="level-feature">5秒预览后隐藏原图</div>
+                    <div class="level-feature">仅3次查看原图机会</div>
+                    <div class="level-feature">正确位置自动锁定</div>
+                    <div class="level-feature">基于表现的评分系统</div>
+                </div>
+                <a href="level2/index.html" class="play-btn">开始挑战</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 音乐控制
+        const bgmFiles = [
+            'assets/sounds/bgm/曼波波波波.mp3',
+            'assets/sounds/bgm/晴天.mp3'
+        ];
+        
+        // 从文件路径中自动提取文件名
+        function extractFileName(filePath) {
+            const parts = filePath.split('/');
+            const fileName = parts[parts.length - 1];
+            return fileName.replace('.mp3', '');
+        }
+        
+        const musicNames = bgmFiles.map(extractFileName);
+        let currentMusicIndex = 0;
+        let bgm = null;
+        let isPlaying = false;
+        let userInteracted = false;
+        
+        // 初始化音频
+        function initAudio() {
+            if (!bgm) {
+                bgm = new Audio();
+                bgm.src = bgmFiles[currentMusicIndex];
+                bgm.loop = true;
+                bgm.volume = 0.3;
+                
+                bgm.addEventListener('canplay', () => {
+                    console.log('音频可以播放:', bgmFiles[currentMusicIndex]);
+                });
+                
+                bgm.addEventListener('error', (e) => {
+                    console.error('音频加载失败:', e);
+                    console.error('文件路径:', bgmFiles[currentMusicIndex]);
+                });
+            }
+        }
+        
+        // 用户交互后才能播放
+        document.addEventListener('click', () => {
+            if (!userInteracted) {
+                userInteracted = true;
+                console.log('用户已交互，可以播放音频');
+            }
+        }, { once: true });
+        
+        document.addEventListener('keydown', () => {
+            if (!userInteracted) {
+                userInteracted = true;
+                console.log('用户已交互，可以播放音频');
+            }
+        }, { once: true });
+        
+        // 页面加载后尝试自动播放
+        window.addEventListener('load', () => {
+            initAudio();
+            setTimeout(() => {
+                const playPromise = bgm.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        isPlaying = true;
+                        const btn = document.getElementById('toggleMusic');
+                        btn.textContent = '🎶';
+                        btn.classList.add('active');
+                        console.log('自动播放成功');
+                        updateMusicName();
+                    }).catch(e => {
+                        console.log('自动播放失败，等待用户交互:', e);
+                    });
+                }
+            }, 500);
+        });
+        
+        function toggleMusic() {
+            initAudio();
+            const btn = document.getElementById('toggleMusic');
+            if (isPlaying) {
+                bgm.pause();
+                btn.textContent = '🎵';
+                btn.classList.remove('active');
+                console.log('音乐暂停');
+            } else {
+                const playPromise = bgm.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        btn.textContent = '🎶';
+                        btn.classList.add('active');
+                        console.log('音乐播放');
+                    }).catch(e => {
+                        console.error('播放失败:', e);
+                    });
+                }
+            }
+            isPlaying = !isPlaying;
+            updateMusicName();
+        }
+        
+        function updateMusicName() {
+            const nameEl = document.getElementById('musicName');
+            if (nameEl) {
+                nameEl.textContent = musicNames[currentMusicIndex];
+            }
+        }
+        
+        function changeMusic(direction) {
+            initAudio();
+            currentMusicIndex = (currentMusicIndex + direction + bgmFiles.length) % bgmFiles.length;
+            const wasPlaying = isPlaying;
+            
+            if (isPlaying) {
+                bgm.pause();
+                isPlaying = false;
+            }
+            
+            bgm.src = bgmFiles[currentMusicIndex];
+            console.log('切换到音乐:', bgmFiles[currentMusicIndex]);
+            updateMusicName();
+            
+            bgm.load();
+            bgm.addEventListener('canplay', () => {
+                console.log('新音乐可以播放');
+                bgm.play().then(() => {
+                    isPlaying = true;
+                    const btn = document.getElementById('toggleMusic');
+                    btn.textContent = '🎶';
+                    btn.classList.add('active');
+                    console.log('音乐继续播放');
+                }).catch(e => console.error('播放失败:', e));
+            }, { once: true });
+            
+            bgm.addEventListener('error', (e) => {
+                console.error('音乐加载失败:', e);
+                console.error('文件路径:', bgmFiles[currentMusicIndex]);
+            }, { once: true });
+        }
+        
+        function toggleHelp() {
+            const panel = document.getElementById('helpPanel');
+            panel.classList.toggle('show');
+        }
+        
+        // 点击空白区域关闭帮助面板
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('helpPanel');
+            const helpBtn = document.querySelector('.help-btn');
+            
+            // 如果面板是打开的，且点击的不是面板内部或帮助按钮
+            if (panel.classList.contains('show') && !panel.contains(e.target) && !helpBtn.contains(e.target)) {
+                panel.classList.remove('show');
+            }
+        });
+        
+        function goToLevel(level) {
+            if (level === 1) {
+                window.location.href = 'level1/index.html';
+            } else if (level === 2) {
+                window.location.href = 'level2/index.html';
+            }
+        }
+        
+
+    </script>
+</body>
+</html>
